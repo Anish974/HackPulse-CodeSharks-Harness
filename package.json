@@ -1,0 +1,31 @@
+{
+  "name": "codesharks-agentic-harness",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Enterprise Autonomous Multi-Agent Operations System with Human-in-the-Loop Approval Harness",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev --workspace=apps/api\" \"npm run dev --workspace=apps/web\"",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "start": "npm run start --workspace=apps/api",
+    "build": "npm run build --workspaces --if-present",
+    "seed": "npm run seed --workspace=apps/api"
+  },
+  "keywords": [
+    "agentic-ai",
+    "human-in-the-loop",
+    "multi-agent",
+    "hackpulse",
+    "monorepo"
+  ],
+  "author": "CodeSharks",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

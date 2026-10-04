@@ -1,0 +1,13 @@
+{
+  "name": "@codesharks/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./constants": "./src/constants.js"
+  },
+  "scripts": {
+    "test": "echo \"Shared package loaded successfully\""
+  }
+}
