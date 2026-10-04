@@ -245,8 +245,8 @@
   align-items: center;
   gap: var(--s-4);
   height: var(--strip-h);
-  margin: calc(var(--s-6) * -1) calc(var(--s-7) * -1) var(--s-5);
-  padding: 0 var(--s-7);
+  margin: 0 0 var(--s-4) 0;
+  padding: 0 var(--s-4);
   background: rgba(6, 8, 9, 0.9);
   border-bottom: 1px solid var(--line-soft);
   backdrop-filter: blur(10px);
@@ -376,7 +376,7 @@
    track whatever padding .main-content is currently using. */
 @media (max-width: 900px) {
   .clearance-strip {
-    margin: -20px -16px var(--s-4);
+    margin: 0 0 var(--s-3) 0;
     padding: 0 16px;
     gap: var(--s-3);
   }

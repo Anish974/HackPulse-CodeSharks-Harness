@@ -18,12 +18,12 @@ const AGENT_NAMES = {
 };
 
 const AGENT_META = {
-  sales:     { display: 'Sales & Growth',   subtitle: 'RESEARCH & DEALS',   icon: '💼', color: '#5fb3d9', desc: 'Performs market research, qualifies inbound leads, and prepares commercial agreements.' },
-  finance:   { display: 'Finance & Risk',   subtitle: 'TREASURY SYSTEM',    icon: '📊', color: '#56c2a6', desc: 'Manages invoices, chases overdue accounts receivable, and tracks payment delinquency.' },
-  marketing: { display: 'Creative & Growth', subtitle: 'SCRIPTWRITING & ADS', icon: '🚀', color: '#8a8fe0', desc: 'Writes high-converting copy, plans viral campaigns, and coordinates ad spend.' },
-  secretary: { display: 'AYUS Core',        subtitle: 'EXECUTIVE ASSISTANT', icon: '🧠', color: '#7dd3d8', desc: 'Your JARVIS-style operations intelligence — coordinates, drafts, and runs daily ops.' },
-  hr:        { display: 'People Operations', subtitle: 'TALENT & HIRING',    icon: '👥', color: '#b088d9', desc: 'Screens developer portfolios, conducts technical matching, and prepares offer letters.' },
-  cto:       { display: 'Builder & Infra',  subtitle: 'BUILD SYSTEM & CTO', icon: '⚡', color: '#4f9fd4', desc: 'Monitors cluster telemetry, triages production alerts, and executes safe rollbacks.' },
+  sales:     { display: 'Researcher',       subtitle: 'RESEARCH & DEALS',   icon: '💼', color: '#5fb3d9', desc: 'Performs market research, qualifies inbound leads, and prepares commercial agreements.' },
+  finance:   { display: 'Finance',          subtitle: 'TREASURY SYSTEM',    icon: '📊', color: '#56c2a6', desc: 'Manages invoices, chases overdue accounts receivable, and tracks payment delinquency.' },
+  marketing: { display: 'Content Writer',   subtitle: 'SCRIPTWRITING & ADS', icon: '🚀', color: '#8a8fe0', desc: 'Writes high-converting copy, plans viral campaigns, and coordinates ad spend.' },
+  secretary: { display: 'AYUS',             subtitle: 'EXECUTIVE ASSISTANT', icon: '🧠', color: '#7dd3d8', desc: 'Your JARVIS-style operations intelligence — coordinates, drafts, and runs daily ops.' },
+  hr:        { display: 'Talent & HR',      subtitle: 'CAMPAIGNS & HIRING', icon: '👥', color: '#b088d9', desc: 'Screens developer portfolios, conducts technical matching, and prepares offer letters.' },
+  cto:       { display: 'Builder & CTO',    subtitle: 'BUILD SYSTEM & TECH', icon: '⚡', color: '#4f9fd4', desc: 'Monitors cluster telemetry, triages production alerts, and executes safe rollbacks.' },
 };
 
 const NAV_TIERS = [
@@ -66,8 +66,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('ayus');
   const [navCollapsed, setNavCollapsed] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [runningAgent, setRunningAgent] = useState(null);
-  const [agents, setAgents] = useState([]);
+  const [selectedAgentFilter, setSelectedAgentFilter] = useState('all');
   const [approvals, setApprovals] = useState([]);
   const [metrics, setMetrics] = useState({
     totalApprovalsHandled: 0,
@@ -86,28 +85,23 @@ export default function App() {
   const [lastSweepTime, setLastSweepTime] = useState(null);
   const terminalEndRef = useRef(null);
 
-  // Live Clock
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // Auto-scroll terminal
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 
-  // Fetch initial data
   const refreshAllData = async () => {
     try {
-      const [resAgents, resApprovals, resMetrics, resDb] = await Promise.all([
-        fetch(`${API_BASE}/api/agents`).then(r => r.json()).catch(() => []),
+      const [resApprovals, resMetrics, resDb] = await Promise.all([
         fetch(`${API_BASE}/api/approvals`).then(r => r.json()).catch(() => ({ pending: [], history: [] })),
         fetch(`${API_BASE}/api/metrics`).then(r => r.json()).catch(() => ({})),
         fetch(`${API_BASE}/api/db`).then(r => r.json()).catch(() => null)
       ]);
 
-      if (Array.isArray(resAgents) && resAgents.length) setAgents(resAgents);
       if (resApprovals.pending) {
         setApprovals(resApprovals.pending);
         if (resApprovals.pending.length > 0) {
@@ -164,7 +158,7 @@ export default function App() {
     if (type === 'agent:start') {
       setBusy(true);
       setReactorState('thinking');
-      setReactorTranscript(`Autonomous flight cycle started for ${data.department}.`);
+      setReactorTranscript(`Autonomous cycle started for ${data.department}.`);
       addLog(data.agent?.name || 'AGENT', `Autonomous cycle triggered for ${data.department}`, 'thought');
     } else if (type === 'agent:thought') {
       addLog(data.agentName, `🧠 Plan: ${data.thought}`, 'thought');
@@ -174,8 +168,8 @@ export default function App() {
       addLog('HARNESS', `🛡️ Governance: ${data.tool} -> Risk=${data.riskLevel}, Halt=${data.requiresApproval}`, 'policy');
     } else if (type === 'agent:paused_for_approval') {
       setReactorState('alert');
-      setReactorTranscript(`CRITICAL ACTION HALTED: ${data.summary}. Pushed to Amber Clearance Queue.`);
-      addLog('GATEKEEPER', `⛔ Intercepted ${data.agentName}: Action halted! Awaiting founder clearance.`, 'approval');
+      setReactorTranscript(`CRITICAL ACTION HALTED: ${data.summary}. Pushed to Clearance Queue.`);
+      addLog('GATEKEEPER', `⛔ Intercepted ${data.agentName}: Action halted! Awaiting clearance.`, 'approval');
       refreshAllData();
     } else if (type === 'agent:tool_executed') {
       setReactorState('speaking');
@@ -201,8 +195,8 @@ export default function App() {
   const runAllAgents = async () => {
     setBusy(true);
     setReactorState('thinking');
-    setReactorTranscript('Executing full multi-department autonomous sweep across all 5 specialized seats...');
-    addLog('ORCHESTRATOR', 'Running full autonomous enterprise sweep across all 5 departments...', 'thought');
+    setReactorTranscript('Executing full multi-department autonomous sweep across 6 specialized seats...');
+    addLog('ORCHESTRATOR', 'Running full autonomous enterprise sweep across all departments...', 'thought');
     try {
       await fetch(`${API_BASE}/api/agents/run-all`, { method: 'POST' });
       setLastSweepTime(new Date());
@@ -215,7 +209,6 @@ export default function App() {
   };
 
   const runSingleAgent = async (deptKey) => {
-    setRunningAgent(deptKey);
     setBusy(true);
     try {
       await fetch(`${API_BASE}/api/agents/${deptKey.toUpperCase()}/run`, { method: 'POST' });
@@ -223,7 +216,6 @@ export default function App() {
     } catch (e) {
       addLog('ERROR', `Run failed: ${e.message}`, 'approval');
     } finally {
-      setRunningAgent(null);
       setBusy(false);
     }
   };
@@ -276,300 +268,164 @@ export default function App() {
     }
   };
 
-  return (
-    <div className="app-shell" style={{ display: 'flex', minHeight: '100vh', background: 'var(--void)' }}>
-      {/* Scope Radar Sweep & Grid */}
-      <div className="ambient-grid" />
-      <div className="gc-radar-bg" />
-      <div className="gc-radar-sweep" />
+  const visibleApprovals = selectedAgentFilter === 'all'
+    ? approvals
+    : approvals.filter(a => a.agentId?.toLowerCase().includes(selectedAgentFilter) || a.department?.toLowerCase() === selectedAgentFilter);
 
-      {/* ================================================================
-          LEFT RAIL (3-TIER SIDEBAR)
-         ================================================================ */}
-      <aside
-        className="sidebar"
-        style={{
-          width: navCollapsed ? '64px' : 'var(--sidebar-w)',
-          transition: 'var(--transition)',
-          flexShrink: 0,
-          background: 'var(--deck)',
-          borderRight: '1px solid var(--line-soft)',
-          display: 'flex',
-          flexDirection: 'column',
-          zIndex: 50,
-          position: 'sticky',
-          top: 0,
-          height: '100vh'
-        }}
-      >
-        {/* Brand Block */}
-        <div
-          className="brand-block"
-          style={{
-            padding: '16px',
-            borderBottom: '1px solid var(--line-soft)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}
-        >
-          <div
-            style={{
-              width: '32px',
-              height: '32px',
-              background: 'var(--deck-2)',
-              border: '1px solid var(--ice)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px',
-              borderRadius: '2px',
-              boxShadow: '0 0 10px rgba(95, 179, 217, 0.25)'
-            }}
-          >
-            🦈
+  return (
+    <>
+      {/* Background Ambience */}
+      <div className="ambient" aria-hidden="true">
+        <span /><span /><span /><span /><span />
+        <i className="ambient-grid" />
+      </div>
+
+      {/* 3-Column Ground Control Grid Shell */}
+      <div className={`app-shell ${navCollapsed ? 'nav-collapsed' : ''}`}>
+        
+        {/* ================================================================
+            COLUMN 1: LEFT SIDEBAR RAIL
+           ================================================================ */}
+        <aside className="sidebar">
+          {/* Logo Wordmark */}
+          <div className="sidebar-logo">
+            <div className="wordmark">
+              <h1>AYUS&nbsp;OPS</h1>
+              <span>v1</span>
+            </div>
+            <div className="sidebar-subtitle">Ground control</div>
           </div>
-          {!navCollapsed && (
-            <div>
-              <div style={{ fontFamily: 'var(--display)', fontSize: '13px', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--ink-bright)', textTransform: 'uppercase' }}>
-                AYUS OPS
+
+          {/* 3-Tier Navigation */}
+          <nav className="sidebar-nav">
+            {NAV_TIERS.map((tier) => (
+              <div className="nav-tier" key={tier.label} style={{ marginBottom: '14px' }}>
+                <div className="sidebar-nav-label">{tier.label}</div>
+                {tier.items.map((item) => {
+                  const isActive = activeTab === item.id;
+                  const isClearances = item.id === 'approvals';
+                  return (
+                    <button
+                      key={item.id}
+                      className={`nav-item ${isActive ? 'active' : ''}`}
+                      onClick={() => setActiveTab(item.id)}
+                    >
+                      <span className="nav-icon">{item.icon}</span>
+                      <span>{item.label}</span>
+                      {isClearances && approvals.length > 0 && (
+                        <span className="nav-badge-red" title={`${approvals.length} waiting on you`}>
+                          {approvals.length}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: '9px', letterSpacing: '0.14em', color: 'var(--ice)', textTransform: 'uppercase' }}>
-                GROUND CONTROL
+            ))}
+          </nav>
+
+          {/* Sidebar Footer */}
+          <div className="sidebar-footer">
+            <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--muted)', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--ink)' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--amber)' }} />
+                <strong>FOUNDER: ANISH</strong>
+              </div>
+              <div style={{ fontSize: '8.5px', marginTop: '2px', letterSpacing: '0.06em' }}>
+                SEAT: CEO • FULL CLEARANCE
               </div>
             </div>
+            <button className="sidebar-signout" onClick={() => alert('Authenticated Founder Session')}>
+              System Connected
+            </button>
+          </div>
+        </aside>
+
+        {/* ================================================================
+            ROW 1, COL 2: TOPBAR
+           ================================================================ */}
+        <header className="topbar">
+          <button
+            className="nav-toggle-btn"
+            onClick={() => setNavCollapsed(!navCollapsed)}
+            title="Toggle navigation"
+            aria-label="Toggle navigation"
+          >
+            ☰
+          </button>
+
+          {approvals.length > 0 && (
+            <button
+              className="topbar-pending-btn"
+              onClick={() => setActiveTab('approvals')}
+              title="View pending approvals"
+            >
+              <span className="red-dot-pulse" />
+              <span>{approvals.length} Pending Decision{approvals.length > 1 ? 's' : ''}</span>
+            </button>
           )}
-        </div>
 
-        {/* 3-Tier Navigation */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 8px' }}>
-          {NAV_TIERS.map((tier, idx) => (
-            <div key={idx} style={{ marginBottom: '18px' }}>
-              {!navCollapsed && (
-                <div
-                  style={{
-                    fontFamily: 'var(--mono)',
-                    fontSize: '9px',
-                    letterSpacing: '0.16em',
-                    textTransform: 'uppercase',
-                    color: 'var(--muted)',
-                    padding: '4px 10px 8px',
-                    fontWeight: 600
-                  }}
-                >
-                  {tier.label}
-                </div>
-              )}
-              {tier.items.map((item) => {
-                const isActive = activeTab === item.id;
-                const isClearance = item.id === 'approvals';
-                const hasPending = isClearance && approvals.length > 0;
+          <div className={`topbar-status ${busy ? 'is-running' : ''}`}>
+            <span className="top-dot" />
+            <span>{busy ? 'Agents Running' : 'Ground Control Operational'}</span>
+          </div>
 
+          <div className="topbar-clock">
+            {now.toLocaleTimeString('en-IN', { hour12: false })} IST
+          </div>
+
+          <button
+            className="run-btn"
+            disabled={busy}
+            onClick={runAllAgents}
+          >
+            {busy ? 'Sweeping...' : '⚡ Sweep Org Now'}
+          </button>
+        </header>
+
+        {/* ================================================================
+            ROW 2, COL 2: MAIN CONTENT AREA
+           ================================================================ */}
+        <div className="main-content">
+          {/* Signature Clearance Strip */}
+          <div className="clearance-strip">
+            <span className="clearance-label">Clearances</span>
+
+            <div className="clearance-ticks">
+              {AGENTS.map((id) => {
+                const isHolding = approvals.some(a => a.agentId?.toLowerCase().includes(id));
+                const state = isHolding ? 'holding' : busy ? 'busy' : '';
                 return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: navCollapsed ? 'center' : 'space-between',
-                      gap: '10px',
-                      padding: '8px 10px',
-                      marginBottom: '2px',
-                      background: isActive
-                        ? isClearance && hasPending
-                          ? 'var(--amber-dim)'
-                          : 'var(--ice-dim)'
-                        : 'transparent',
-                      border: 'none',
-                      borderLeft: isActive
-                        ? isClearance && hasPending
-                          ? '2px solid var(--amber)'
-                          : '2px solid var(--ice)'
-                        : '2px solid transparent',
-                      color: isActive
-                        ? isClearance && hasPending
-                          ? 'var(--amber)'
-                          : 'var(--ice)'
-                        : 'var(--muted-bright)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      fontFamily: 'var(--display)',
-                      fontSize: '12px',
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      transition: 'var(--transition)'
-                    }}
-                    title={item.label}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '14px' }}>{item.icon}</span>
-                      {!navCollapsed && <span>{item.label}</span>}
-                    </div>
-
-                    {!navCollapsed && isClearance && approvals.length > 0 && (
-                      <span
-                        className="pending-badge-red"
-                        style={{
-                          fontFamily: 'var(--mono)',
-                          fontSize: '9px',
-                          padding: '1px 6px',
-                          color: 'var(--amber)',
-                          border: '1px solid rgba(232, 168, 56, 0.45)',
-                          background: 'rgba(232, 168, 56, 0.12)'
-                        }}
-                      >
-                        {approvals.length}
-                      </span>
-                    )}
-                  </button>
+                  <span
+                    key={id}
+                    className={`clearance-tick ${state}`}
+                    title={`${AGENT_NAMES[id]} — ${isHolding ? 'Waiting for founder' : busy ? 'Working' : 'Idle'}`}
+                  />
                 );
               })}
             </div>
-          ))}
-        </div>
 
-        {/* Bottom Operator Block */}
-        {!navCollapsed && (
-          <div
-            style={{
-              padding: '12px 14px',
-              borderTop: '1px solid var(--line-soft)',
-              fontFamily: 'var(--mono)',
-              fontSize: '10px',
-              color: 'var(--muted)'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--ink)' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--amber)' }} />
-              <strong>FOUNDER: ANISH</strong>
-            </div>
-            <div style={{ fontSize: '8.5px', marginTop: '2px', letterSpacing: '0.06em' }}>
-              SEAT: CEO • FULL CLEARANCE
-            </div>
-          </div>
-        )}
-      </aside>
-
-      {/* ================================================================
-          MAIN CONTENT AREA & TOPBAR
-         ================================================================ */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        {/* TopBar */}
-        <header
-          className="topbar"
-          style={{
-            height: 'var(--topbar-h)',
-            background: 'rgba(11, 14, 18, 0.85)',
-            borderBottom: '1px solid var(--line-soft)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 24px',
-            position: 'sticky',
-            top: 0,
-            zIndex: 45,
-            backdropFilter: 'blur(12px)'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <button
-              className="nav-toggle-btn"
-              onClick={() => setNavCollapsed(!navCollapsed)}
-              style={{
-                background: 'transparent',
-                border: '1px solid var(--line-soft)',
-                color: 'var(--muted-bright)',
-                padding: '4px 8px',
-                cursor: 'pointer'
-              }}
-            >
-              ☰
-            </button>
-
-            {approvals.length > 0 && (
-              <button
-                className="topbar-pending-btn"
-                onClick={() => setActiveTab('approvals')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '4px 10px',
-                  cursor: 'pointer'
-                }}
-              >
-                <span className="red-dot-pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--amber)' }} />
-                <span>{approvals.length} PENDING CLEARANCE</span>
-              </button>
-            )}
-
-            <div className={`topbar-status ${busy ? 'is-running' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span className="top-dot" style={{ width: '6px', height: '6px', borderRadius: '50%' }} />
-              <span>{busy ? 'Agents Executing Swarm' : 'Ground Control Operational'}</span>
+            <div className="clearance-readout">
+              <span><b>{AGENTS.length}</b> agents</span>
+              {approvals.length > 0 ? (
+                <button
+                  className="holding-count"
+                  onClick={() => setActiveTab('approvals')}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: '9.5px', textTransform: 'uppercase' }}
+                >
+                  <b className="holding-count">{approvals.length}</b> holding for you
+                </button>
+              ) : (
+                <span style={{ color: 'var(--signal)' }}>airspace clear</span>
+              )}
+              {lastSweepTime && (
+                <span>
+                  last sweep <b>{lastSweepTime.toLocaleTimeString('en-IN', { hour12: false })}</b>
+                </span>
+              )}
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div className="topbar-clock" style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ink)' }}>
-              {now.toLocaleTimeString('en-IN', { hour12: false })} IST
-            </div>
-
-            <button
-              className="run-btn"
-              disabled={busy}
-              onClick={runAllAgents}
-              style={{ padding: '6px 14px', cursor: 'pointer' }}
-            >
-              {busy ? 'SWEEPING...' : '⚡ SWEEP ORG NOW'}
-            </button>
-          </div>
-        </header>
-
-        {/* The Signature Clearance Strip (26px band across org state) */}
-        <div className="clearance-strip">
-          <span className="clearance-label" style={{ color: 'var(--amber)', fontWeight: 700 }}>
-            CLEARANCES
-          </span>
-
-          <div className="clearance-ticks">
-            {AGENTS.map((id) => {
-              const isHolding = approvals.some(a => a.agentId?.includes(id));
-              const state = isHolding ? 'holding' : busy ? 'busy' : '';
-              return (
-                <span
-                  key={id}
-                  className={`clearance-tick ${state}`}
-                  title={`${AGENT_NAMES[id]} — ${isHolding ? 'Waiting for founder clearance' : busy ? 'Working' : 'Idle'}`}
-                />
-              );
-            })}
-          </div>
-
-          <div className="clearance-readout">
-            <span><b>{AGENTS.length}</b> AGENTS</span>
-            {approvals.length > 0 ? (
-              <button
-                className="holding-count"
-                onClick={() => setActiveTab('approvals')}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: '9.5px', textTransform: 'uppercase' }}
-              >
-                <b className="holding-count">{approvals.length}</b> HOLDING FOR FOUNDER
-              </button>
-            ) : (
-              <span style={{ color: 'var(--signal)' }}>AIRSPACE CLEAR</span>
-            )}
-            {lastSweepTime && (
-              <span>
-                LAST SWEEP <b>{lastSweepTime.toLocaleTimeString('en-IN', { hour12: false })}</b>
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Content Body */}
-        <main style={{ padding: '24px', flex: 1, position: 'relative', zIndex: 10 }}>
           {/* TAB 1: FLIGHT DECK (AYUS HUD) */}
           {activeTab === 'ayus' && (
             <div>
@@ -580,7 +436,7 @@ export default function App() {
                 onTriggerSweep={runAllAgents}
               />
 
-              {/* Quick Metrics Bar */}
+              {/* 4 Metric Tiles Row */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '24px' }}>
                 <div className="card-urgent" style={{ background: 'var(--deck)', padding: '14px 18px' }}>
                   <div style={{ fontFamily: 'var(--mono)', fontSize: '9.5px', letterSpacing: '0.12em', color: 'var(--amber)', textTransform: 'uppercase' }}>
@@ -631,22 +487,18 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Two Column Deck: Mission Dispatcher vs Live Telemetry Stream */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.25fr', gap: '20px' }}>
-                {/* Left: Mission Simulator */}
+              {/* 2-Column Split: Mission Simulator vs Telemetry Feed */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                {/* Mission Simulator */}
                 <div style={{ background: 'var(--deck)', border: '1px solid var(--line-soft)', padding: '18px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--line-soft)', paddingBottom: '10px', marginBottom: '14px' }}>
                     <div style={{ fontFamily: 'var(--display)', fontSize: '13px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ice)' }}>
                       ⚡ LIVE MISSION SIMULATOR
                     </div>
                     <span style={{ fontFamily: 'var(--mono)', fontSize: '9.5px', color: 'var(--muted)' }}>
-                      JUDGE PITCH SUITE
+                      JUDGE DEMO PITCH
                     </span>
                   </div>
-
-                  <p style={{ fontFamily: 'var(--mono)', fontSize: '10.5px', color: 'var(--muted-bright)', marginBottom: '14px', lineHeight: 1.5 }}>
-                    Inject real-world operational anomalies to demonstrate autonomous tool calling and the Human-in-the-Loop circuit breaker:
-                  </p>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <button
@@ -701,11 +553,11 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Right: Machine Telemetry Feed */}
+                {/* Telemetry Stream */}
                 <div style={{ background: 'var(--deck)', border: '1px solid var(--line-soft)', padding: '18px', display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--line-soft)', paddingBottom: '10px', marginBottom: '14px' }}>
                     <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--ice)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                      TELEMETRY STREAM [ICE]
+                      MACHINE TELEMETRY STREAM [ICE]
                     </div>
                     <button
                       onClick={() => setLogs([])}
@@ -715,9 +567,9 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div style={{ flex: 1, maxHeight: '360px', overflowY: 'auto', fontFamily: 'var(--mono)', fontSize: '10.5px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ flex: 1, maxHeight: '280px', overflowY: 'auto', fontFamily: 'var(--mono)', fontSize: '10.5px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {logs.length === 0 ? (
-                      <div style={{ color: 'var(--muted)', textAlign: 'center', padding: '3rem 0' }}>
+                      <div style={{ color: 'var(--muted)', textAlign: 'center', padding: '2rem 0' }}>
                         &gt; Awaiting agent swarm actions. Click any mission scenario to begin stream.
                       </div>
                     ) : (
@@ -738,7 +590,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 2: CLEARANCES (APPROVAL QUEUE) */}
+          {/* TAB 2: CLEARANCES */}
           {activeTab === 'approvals' && (
             <div>
               <div style={{ borderBottom: '1px solid var(--line-soft)', paddingBottom: '12px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -751,26 +603,26 @@ export default function App() {
                   </div>
                 </div>
                 <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--amber)', padding: '3px 10px', border: '1px solid var(--amber)', background: 'var(--amber-dim)' }}>
-                  {approvals.length} HOLDING
+                  {visibleApprovals.length} HOLDING
                 </span>
               </div>
 
-              {approvals.length === 0 ? (
+              {visibleApprovals.length === 0 ? (
                 <div style={{ background: 'var(--deck)', border: '1px solid var(--line-soft)', padding: '48px', textAlign: 'center' }}>
                   <div style={{ fontSize: '28px', marginBottom: '8px' }}>🛡️</div>
                   <div style={{ fontFamily: 'var(--display)', fontSize: '14px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-bright)' }}>
                     AIRSPACE CLEAR • NO PENDING CLEARANCES
                   </div>
                   <div style={{ fontFamily: 'var(--mono)', fontSize: '10.5px', color: 'var(--muted)', marginTop: '6px' }}>
-                    All autonomous agents are operating within policy thresholds. Trigger a scenario from the Flight Deck to simulate a critical action.
+                    All autonomous agents are operating within policy thresholds.
                   </div>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {approvals.map((req) => (
+                  {visibleApprovals.map((req) => (
                     <div
                       key={req.id}
-                      className="gc-clearance-card"
+                      className="card card-urgent"
                       style={{ background: 'var(--deck)', borderLeft: '3px solid var(--amber)', border: '1px solid rgba(232, 168, 56, 0.3)', padding: '18px' }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -793,14 +645,14 @@ export default function App() {
 
                         <div style={{ display: 'flex', gap: '10px' }}>
                           <button
-                            className="gc-clearance-btn-reject"
+                            className="btn btn-reject"
                             onClick={() => handleReject(req.id)}
                             style={{ padding: '8px 18px', cursor: 'pointer' }}
                           >
                             ✕ REJECT
                           </button>
                           <button
-                            className="gc-clearance-btn-approve"
+                            className="btn btn-approve"
                             onClick={() => handleApprove(req.id)}
                             style={{ padding: '8px 20px', cursor: 'pointer' }}
                           >
@@ -815,7 +667,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 3: AGENTS (THE ORG) */}
+          {/* TAB 3: AGENTS */}
           {activeTab === 'agents' && (
             <div>
               <div style={{ borderBottom: '1px solid var(--line-soft)', paddingBottom: '12px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -824,7 +676,7 @@ export default function App() {
                     THE ORG • 6 SPECIALIZED SEATS
                   </h2>
                   <div style={{ fontFamily: 'var(--mono)', fontSize: '10.5px', color: 'var(--muted-bright)', marginTop: '2px' }}>
-                    Modular agents conforming to HackPulse Problem 04 monorepo architecture.
+                    Modular autonomous agents conforming to HackPulse Problem 04 monorepo architecture.
                   </div>
                 </div>
                 <button className="run-btn" disabled={busy} onClick={runAllAgents} style={{ padding: '6px 14px' }}>
@@ -876,11 +728,11 @@ export default function App() {
 
                       <button
                         className="run-btn"
-                        disabled={busy || runningAgent === key}
+                        disabled={busy}
                         onClick={() => runSingleAgent(key)}
                         style={{ padding: '4px 12px', fontSize: '10.5px' }}
                       >
-                        {runningAgent === key ? 'RUNNING...' : `RUN ${AGENT_NAMES[key].toUpperCase()}`}
+                        RUN {AGENT_NAMES[key].toUpperCase()}
                       </button>
                     </div>
                   </div>
@@ -889,68 +741,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 4: MISSIONS */}
-          {activeTab === 'missions' && (
-            <div>
-              <div style={{ borderBottom: '1px solid var(--line-soft)', paddingBottom: '12px', marginBottom: '20px' }}>
-                <h2 style={{ fontFamily: 'var(--display)', fontSize: '18px', color: 'var(--ice)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                  OPERATIONAL MISSIONS
-                </h2>
-                <div style={{ fontFamily: 'var(--mono)', fontSize: '10.5px', color: 'var(--muted-bright)', marginTop: '2px' }}>
-                  Standard Operating Procedures and executable multi-step plans.
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                <div style={{ background: 'var(--deck)', border: '1px solid var(--line-soft)', padding: '16px' }}>
-                  <div style={{ fontFamily: 'var(--display)', fontSize: '13px', color: '#fff', fontWeight: 700 }}>
-                    MISSION 01: INBOUND QUALIFICATION
-                  </div>
-                  <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--ice)', marginTop: '4px' }}>
-                    SEAT: ARJUN // SALES
-                  </div>
-                  <p style={{ fontFamily: 'var(--mono)', fontSize: '10.5px', color: 'var(--muted)', marginTop: '8px' }}>
-                    Observe new CRM leads, score budget alignment, verify capabilities, and draft proposal terms.
-                  </p>
-                  <button className="run-btn" onClick={() => triggerScenario('ENTERPRISE_CONTRACT')} style={{ width: '100%', marginTop: '12px' }}>
-                    DISPATCH MISSION
-                  </button>
-                </div>
-
-                <div style={{ background: 'var(--deck)', border: '1px solid var(--line-soft)', padding: '16px' }}>
-                  <div style={{ fontFamily: 'var(--display)', fontSize: '13px', color: '#fff', fontWeight: 700 }}>
-                    MISSION 02: CASH-FLOW DEBT AUDIT
-                  </div>
-                  <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--finance)', marginTop: '4px' }}>
-                    SEAT: MEERA // FINANCE
-                  </div>
-                  <p style={{ fontFamily: 'var(--mono)', fontSize: '10.5px', color: 'var(--muted)', marginTop: '8px' }}>
-                    Query overdue accounts, calculate delinquency risk scores, draft reminders, and propose debt settlements.
-                  </p>
-                  <button className="run-btn" onClick={() => triggerScenario('HIGH_VALUE_INVOICE')} style={{ width: '100%', marginTop: '12px' }}>
-                    DISPATCH MISSION
-                  </button>
-                </div>
-
-                <div style={{ background: 'var(--deck)', border: '1px solid var(--line-soft)', padding: '16px' }}>
-                  <div style={{ fontFamily: 'var(--display)', fontSize: '13px', color: '#fff', fontWeight: 700 }}>
-                    MISSION 03: CLUSTER SEV-1 MITIGATION
-                  </div>
-                  <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--cto)', marginTop: '4px' }}>
-                    SEAT: VIKRAM // CTO
-                  </div>
-                  <p style={{ fontFamily: 'var(--mono)', fontSize: '10.5px', color: 'var(--muted)', marginTop: '8px' }}>
-                    Detect CPU/memory load anomalies, isolate stack traces, and request authorization for hotfix deployment.
-                  </p>
-                  <button className="run-btn" onClick={() => triggerScenario('SEV1_INCIDENT')} style={{ width: '100%', marginTop: '12px' }}>
-                    DISPATCH MISSION
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: LEADS (RECORDS) */}
+          {/* TAB 4: LEADS */}
           {activeTab === 'leads' && (
             <div>
               <div style={{ borderBottom: '1px solid var(--line-soft)', paddingBottom: '12px', marginBottom: '20px' }}>
@@ -1007,7 +798,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 6: INVOICES (TREASURY) */}
+          {/* TAB 5: INVOICES */}
           {activeTab === 'invoices' && (
             <div>
               <div style={{ borderBottom: '1px solid var(--line-soft)', paddingBottom: '12px', marginBottom: '20px' }}>
@@ -1065,7 +856,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 7: AUDIT LEDGER */}
+          {/* TAB 6: AUDIT */}
           {activeTab === 'audit' && (
             <div>
               <div style={{ borderBottom: '1px solid var(--line-soft)', paddingBottom: '12px', marginBottom: '20px' }}>
@@ -1114,7 +905,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 8: INSIGHTS */}
+          {/* TAB 7: INSIGHTS */}
           {activeTab === 'insights' && (
             <div>
               <div style={{ borderBottom: '1px solid var(--line-soft)', paddingBottom: '12px', marginBottom: '20px' }}>
@@ -1165,8 +956,117 @@ export default function App() {
               </div>
             </div>
           )}
-        </main>
+
+          {/* TAB 8: MISSIONS */}
+          {activeTab === 'missions' && (
+            <div>
+              <div style={{ borderBottom: '1px solid var(--line-soft)', paddingBottom: '12px', marginBottom: '20px' }}>
+                <h2 style={{ fontFamily: 'var(--display)', fontSize: '18px', color: 'var(--ice)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  OPERATIONAL MISSIONS
+                </h2>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: '10.5px', color: 'var(--muted-bright)', marginTop: '2px' }}>
+                  Multi-agent SOP missions dispatched to the swarm.
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                <div style={{ background: 'var(--deck)', border: '1px solid var(--line-soft)', padding: '16px' }}>
+                  <div style={{ fontFamily: 'var(--display)', fontSize: '13px', color: '#fff', fontWeight: 700 }}>
+                    MISSION 01: INBOUND QUALIFICATION
+                  </div>
+                  <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--ice)', marginTop: '4px' }}>
+                    SEAT: ARJUN // SALES
+                  </div>
+                  <p style={{ fontFamily: 'var(--mono)', fontSize: '10.5px', color: 'var(--muted)', marginTop: '8px' }}>
+                    Observe new CRM leads, score budget alignment, verify capabilities, and draft proposal terms.
+                  </p>
+                  <button className="run-btn" onClick={() => triggerScenario('ENTERPRISE_CONTRACT')} style={{ width: '100%', marginTop: '12px' }}>
+                    DISPATCH MISSION
+                  </button>
+                </div>
+
+                <div style={{ background: 'var(--deck)', border: '1px solid var(--line-soft)', padding: '16px' }}>
+                  <div style={{ fontFamily: 'var(--display)', fontSize: '13px', color: '#fff', fontWeight: 700 }}>
+                    MISSION 02: CASH-FLOW DEBT AUDIT
+                  </div>
+                  <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--finance)', marginTop: '4px' }}>
+                    SEAT: MEERA // FINANCE
+                  </div>
+                  <p style={{ fontFamily: 'var(--mono)', fontSize: '10.5px', color: 'var(--muted)', marginTop: '8px' }}>
+                    Query overdue accounts, calculate delinquency risk scores, draft reminders, and propose debt settlements.
+                  </p>
+                  <button className="run-btn" onClick={() => triggerScenario('HIGH_VALUE_INVOICE')} style={{ width: '100%', marginTop: '12px' }}>
+                    DISPATCH MISSION
+                  </button>
+                </div>
+
+                <div style={{ background: 'var(--deck)', border: '1px solid var(--line-soft)', padding: '16px' }}>
+                  <div style={{ fontFamily: 'var(--display)', fontSize: '13px', color: '#fff', fontWeight: 700 }}>
+                    MISSION 03: CLUSTER SEV-1 MITIGATION
+                  </div>
+                  <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--cto)', marginTop: '4px' }}>
+                    SEAT: VIKRAM // CTO
+                  </div>
+                  <p style={{ fontFamily: 'var(--mono)', fontSize: '10.5px', color: 'var(--muted)', marginTop: '8px' }}>
+                    Detect CPU/memory load anomalies, isolate stack traces, and request authorization for hotfix deployment.
+                  </p>
+                  <button className="run-btn" onClick={() => triggerScenario('SEV1_INCIDENT')} style={{ width: '100%', marginTop: '12px' }}>
+                    DISPATCH MISSION
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ================================================================
+            ROW 1-2, COL 3: RIGHT AGENT RAIL
+           ================================================================ */}
+        <aside className="right-agents-sidebar">
+          <div className="right-agents-header">
+            <div className="right-agents-title">AGENTS</div>
+            <div className="right-agents-subtitle">Direct Voice &amp; Command</div>
+          </div>
+
+          <div className="right-agents-list">
+            {AGENTS.map((id) => {
+              const meta = AGENT_META[id];
+              const pending = approvals.filter(a => a.agentId?.toLowerCase().includes(id) || a.department?.toLowerCase() === id).length;
+              const isSelected = selectedAgentFilter === id;
+              const status = busy ? 'working' : 'idle';
+
+              return (
+                <button
+                  key={id}
+                  className={`right-agent-card a-${id} ${isSelected ? 'active' : ''}`}
+                  onClick={() => {
+                    const next = selectedAgentFilter === id ? 'all' : id;
+                    setSelectedAgentFilter(next);
+                    if (next !== 'all') setActiveTab('approvals');
+                  }}
+                  title={`${AGENT_NAMES[id]} — ${meta.display}`}
+                >
+                  <div className="right-agent-avatar" style={{ color: meta.color, fontSize: '16px' }}>
+                    {meta.icon}
+                  </div>
+                  <div className="right-agent-info">
+                    <div className="right-agent-name">{AGENT_NAMES[id]}</div>
+                    <div className="right-agent-role">{meta.subtitle}</div>
+                  </div>
+                  <div className="right-agent-status">
+                    <span className={`status-dot ${status}`} />
+                    {pending > 0 && (
+                      <span className="pending-badge-red" title={`${pending} pending approval`}>
+                        {pending}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
       </div>
-    </div>
+    </>
   );
 }
