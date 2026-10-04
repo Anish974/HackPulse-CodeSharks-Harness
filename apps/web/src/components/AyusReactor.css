@@ -1,0 +1,154 @@
+/* ===== AYUS Reactor • Ground Control Hero HUD ===== */
+
+.ayus-reactor {
+  --ax: var(--ice, #38bdf8);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 26px;
+  margin-bottom: 24px;
+  background:
+    radial-gradient(640px 240px at 18% 50%, color-mix(in srgb, var(--ax) 14%, transparent), transparent 70%),
+    linear-gradient(180deg, rgba(10, 20, 36, 0.85), rgba(6, 12, 24, 0.95));
+  border: 1px solid color-mix(in srgb, var(--ax) 30%, transparent);
+  box-shadow:
+    0 8px 40px color-mix(in srgb, var(--ax) 15%, transparent),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(16px);
+}
+
+.ayus-reactor-canvas-wrap {
+  flex: 0 0 180px;
+  width: 180px;
+  height: 180px;
+  position: relative;
+  filter: drop-shadow(0 0 35px color-mix(in srgb, var(--ax) 35%, transparent));
+}
+
+.ayus-reactor-canvas-wrap canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* CRT scanlines */
+.ayus-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.06) 0px,
+    rgba(255, 255, 255, 0.06) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  -webkit-mask: radial-gradient(circle at center, #000 40%, transparent 95%);
+  mask: radial-gradient(circle at center, #000 40%, transparent 95%);
+}
+
+.ayus-reactor-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ayus-reactor-tagline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ayus-reactor-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ax);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ayus-reactor-badge i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ax);
+  box-shadow: 0 0 10px var(--ax);
+}
+
+.ayus-reactor-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ayus-reactor-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ayus-reactor-title small {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 400;
+}
+
+.ayus-reactor-transcript {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 8px 14px;
+  line-height: 1.5;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+
+.ayus-reactor-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ayus-hud-btn {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 6px 14px;
+  border: 1px solid color-mix(in srgb, var(--ax) 40%, transparent);
+  background: color-mix(in srgb, var(--ax) 12%, transparent);
+  color: var(--ax);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ayus-hud-btn:hover {
+  background: color-mix(in srgb, var(--ax) 25%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--ax) 40%, transparent);
+}

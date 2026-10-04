@@ -1,0 +1,184 @@
+/* ================================================================
+   AYUS OPS — GROUND CONTROL DESIGN SYSTEM
+   ================================================================
+   THE COLOUR LAW:
+     AMBER = the human. Anything that needs the founder, or is the
+             founder acting: selection, focus, pending clearance.
+     ICE   = the machine. Anything running on its own.
+   
+   THE TYPE LAW:
+     Chakra Petch = interface (nav, buttons, labels, headings)
+     IBM Plex Mono = data (values, IDs, SOP text, code, timestamps)
+   ================================================================ */
+
+:root {
+  --amber: #f59e0b;
+  --amber-dim: rgba(245, 158, 11, 0.15);
+  --amber-glow: rgba(245, 158, 11, 0.35);
+
+  --ice: #38bdf8;
+  --ice-dim: rgba(56, 189, 248, 0.12);
+  --ice-glow: rgba(56, 189, 248, 0.3);
+
+  --bg-dark: #070a12;
+  --bg-surface: #0b1120;
+  --bg-surface-elevated: #0f172a;
+  --border-surface: rgba(255, 255, 255, 0.08);
+
+  --font-interface: 'Chakra Petch', sans-serif;
+  --font-data: 'IBM Plex Mono', monospace;
+}
+
+body {
+  font-family: var(--font-interface);
+  background-color: var(--bg-dark);
+  color: #f1f5f9;
+  letter-spacing: 0.02em;
+}
+
+/* Square Geometry & Etched Instruments */
+.gc-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-surface);
+  position: relative;
+}
+
+.gc-panel-amber {
+  border-color: rgba(245, 158, 11, 0.35);
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.12);
+}
+
+.gc-panel-ice {
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.1);
+}
+
+.gc-header {
+  font-family: var(--font-interface);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gc-data {
+  font-family: var(--font-data);
+}
+
+/* Ambient Scope / Radar Sweep */
+.gc-radar-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.gc-radar-sweep {
+  position: fixed;
+  inset: -50%;
+  pointer-events: none;
+  z-index: 0;
+  background: conic-gradient(from 0deg at 50% 50%, rgba(56, 189, 248, 0.06) 0deg, transparent 60deg, transparent 360deg);
+  animation: gcRadarTurn 16s linear infinite;
+}
+
+@keyframes gcRadarTurn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Ground Control Rail & Tabs */
+.gc-tab-btn {
+  font-family: var(--font-interface);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-surface);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gc-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.gc-tab-btn.active {
+  background: var(--ice-dim);
+  border-color: var(--ice);
+  color: var(--ice);
+  box-shadow: 0 0 15px var(--ice-glow);
+}
+
+.gc-tab-btn.amber-active {
+  background: var(--amber-dim);
+  border-color: var(--amber);
+  color: var(--amber);
+  box-shadow: 0 0 15px var(--amber-glow);
+}
+
+/* Clearance & Approval Queue Item */
+.gc-clearance-card {
+  background: rgba(15, 23, 42, 0.9);
+  border-left: 3px solid var(--amber);
+  border-top: 1px solid rgba(245, 158, 11, 0.2);
+  border-right: 1px solid rgba(245, 158, 11, 0.2);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.gc-clearance-btn-approve {
+  font-family: var(--font-interface);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: #10b981;
+  color: #000;
+  border: none;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gc-clearance-btn-approve:hover {
+  background: #34d399;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.5);
+}
+
+.gc-clearance-btn-reject {
+  font-family: var(--font-interface);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(244, 63, 94, 0.15);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gc-clearance-btn-reject:hover {
+  background: rgba(244, 63, 94, 0.25);
+  border-color: #f43f5e;
+}

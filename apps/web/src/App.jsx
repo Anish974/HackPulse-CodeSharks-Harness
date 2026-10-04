@@ -14,8 +14,12 @@ import {
   AlertTriangle,
   Send,
   Building2,
-  Lock
+  Lock,
+  Cpu,
+  Radar
 } from 'lucide-react';
+import AyusReactor from './components/AyusReactor.jsx';
+import './groundcontrol.css';
 
 const API_BASE = 'http://localhost:3001';
 const WS_URL = 'ws://localhost:3001';
@@ -36,14 +40,14 @@ export default function App() {
   const [loadingAction, setLoadingAction] = useState(null);
   const [activeTab, setActiveTab] = useState('cockpit'); // 'cockpit' | 'database'
   const [dbData, setDbData] = useState(null);
+  const [reactorState, setReactorState] = useState('standby');
+  const [reactorTranscript, setReactorTranscript] = useState('CodeSharks Ground Control active. Department agents operational.');
   const terminalEndRef = useRef(null);
 
-  // Scroll terminal on new logs
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 
-  // Initial Data Fetch
   const refreshAllData = async () => {
     try {
       const [resAgents, resApprovals, resMetrics, resDb] = await Promise.all([
@@ -54,7 +58,15 @@ export default function App() {
       ]);
 
       if (Array.isArray(resAgents) && resAgents.length) setAgents(resAgents);
-      if (resApprovals.pending) setApprovals(resApprovals.pending);
+      if (resApprovals.pending) {
+        setApprovals(resApprovals.pending);
+        if (resApprovals.pending.length > 0) {
+          setReactorState('alert');
+          setReactorTranscript(`ALERT: ${resApprovals.pending.length} critical action(s) require founder clearance.`);
+        } else {
+          setReactorState('standby');
+        }
+      }
       if (resMetrics.totalApprovalsHandled !== undefined) setMetrics(resMetrics);
       if (resDb) setDbData(resDb);
     } catch (e) {
@@ -65,13 +77,12 @@ export default function App() {
   useEffect(() => {
     refreshAllData();
 
-    // WebSocket Connection
     let ws;
     const connectWs = () => {
       ws = new WebSocket(WS_URL);
 
       ws.onopen = () => {
-        addLog('SYSTEM', 'WebSocket Live Agent Feed Connected', 'CONNECTED');
+        addLog('SYSTEM', 'Ground Control Telemetry WebSocket Synced', 'CONNECTED');
       };
 
       ws.onmessage = (event) => {
@@ -101,31 +112,42 @@ export default function App() {
     const { type, data } = payload;
 
     if (type === 'agent:start') {
+      setReactorState('thinking');
+      setReactorTranscript(`Autonomous cycle initiated for ${data.department}. Observing operational telemetry...`);
       addLog(data.agent?.name || 'AGENT', `Autonomous cycle triggered for ${data.department}`, 'thought');
     } else if (type === 'agent:thought') {
-      addLog(data.agentName, `🧠 Thought: ${data.thought}`, 'thought');
+      addLog(data.agentName, `🧠 Plan: ${data.thought}`, 'thought');
     } else if (type === 'agent:tool_call') {
-      addLog(data.agentName, `🔧 Proposing tool: ${data.tool} (${data.intent})`, 'tool');
+      addLog(data.agentName, `🔧 Proposing: ${data.tool} (${data.intent})`, 'tool');
     } else if (type === 'agent:policy_eval') {
-      addLog('HARNESS', `🛡️ Governance Check on ${data.tool}: Risk=${data.riskLevel}, ApprovalRequired=${data.requiresApproval}`, 'policy');
+      addLog('HARNESS', `🛡️ Governance Check: ${data.tool} -> Risk=${data.riskLevel}, Halt=${data.requiresApproval}`, 'policy');
     } else if (type === 'agent:paused_for_approval') {
-      addLog('GATEKEEPER', `⛔ Intercepted ${data.agentName}: Action halted! Pushed to Executive Approval Queue.`, 'approval');
+      setReactorState('alert');
+      setReactorTranscript(`CRITICAL ACTION HALTED: ${data.summary}. Awaiting founder authorization.`);
+      addLog('GATEKEEPER', `⛔ Intercepted ${data.agentName}: Action halted! Pushed to Amber Clearance Queue.`, 'approval');
       refreshAllData();
     } else if (type === 'agent:tool_executed') {
-      addLog('EXECUTOR', `⚡ Tool ${data.tool} executed successfully.`, 'exec');
+      setReactorState('speaking');
+      setReactorTranscript(`Safe tool ${data.tool} executed successfully.`);
+      addLog('EXECUTOR', `⚡ Tool ${data.tool} executed autonomously.`, 'exec');
       refreshAllData();
     } else if (type === 'approval:executed') {
-      addLog('HUMAN-IN-THE-LOOP', `✅ Action ${data.id} APPROVED & EXECUTED by CEO.`, 'exec');
+      setReactorState('speaking');
+      setReactorTranscript(`Action ${data.id} APPROVED & EXECUTED by Founder.`);
+      addLog('FOUNDER', `✅ Action ${data.id} APPROVED & EXECUTED by Founder.`, 'exec');
       refreshAllData();
     } else if (type === 'approval:rejected') {
-      addLog('HUMAN-IN-THE-LOOP', `❌ Action ${data.id} REJECTED by CEO.`, 'approval');
+      setReactorState('standby');
+      setReactorTranscript(`Action ${data.id} REJECTED by Founder.`);
+      addLog('FOUNDER', `❌ Action ${data.id} REJECTED by Founder.`, 'approval');
       refreshAllData();
     }
   };
 
-  // Scenario Simulator
   const triggerScenario = async (scenarioType) => {
     setLoadingAction(scenarioType);
+    setReactorState('thinking');
+    setReactorTranscript(`Scenario ${scenarioType} dispatched. Synthesizing multi-agent steps...`);
     addLog('SIMULATOR', `Dispatching scenario: ${scenarioType}...`, 'tool');
     try {
       await fetch(`${API_BASE}/api/simulate`, {
@@ -135,13 +157,13 @@ export default function App() {
       });
       await refreshAllData();
     } catch (e) {
-      addLog('ERROR', `Failed to simulate scenario: ${e.message}`, 'approval');
+      addLog('ERROR', `Simulation failed: ${e.message}`, 'approval');
+      setReactorState('standby');
     } finally {
       setLoadingAction(null);
     }
   };
 
-  // Run Department Agent
   const runAgent = async (dept) => {
     setLoadingAction(dept);
     try {
@@ -154,9 +176,10 @@ export default function App() {
     }
   };
 
-  // Run All
   const runAllAgents = async () => {
     setLoadingAction('ALL');
+    setReactorState('thinking');
+    setReactorTranscript('Executing full multi-department autonomous sweep across 5 specialized seats...');
     addLog('ORCHESTRATOR', 'Running full autonomous enterprise sweep across all 5 departments...', 'thought');
     try {
       await fetch(`${API_BASE}/api/agents/run-all`, { method: 'POST' });
@@ -168,14 +191,13 @@ export default function App() {
     }
   };
 
-  // Approve Action
   const handleApprove = async (id) => {
     setLoadingAction(`approve_${id}`);
     try {
       await fetch(`${API_BASE}/api/approvals/${id}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approver: 'CEO (Anish)' })
+        body: JSON.stringify({ approver: 'Founder (Anish)' })
       });
       await refreshAllData();
     } catch (e) {
@@ -185,16 +207,15 @@ export default function App() {
     }
   };
 
-  // Reject Action
   const handleReject = async (id) => {
-    const reason = prompt('Enter rejection reason for audit log:', 'Risk exceeds current Q4 budget tolerance');
+    const reason = prompt('Enter rejection rationale for audit ledger:', 'Risk exceeds current Q4 budget tolerance');
     if (!reason) return;
     setLoadingAction(`reject_${id}`);
     try {
       await fetch(`${API_BASE}/api/approvals/${id}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason, reviewer: 'CEO (Anish)' })
+        body: JSON.stringify({ reason, reviewer: 'Founder (Anish)' })
       });
       await refreshAllData();
     } catch (e) {
@@ -205,215 +226,250 @@ export default function App() {
   };
 
   return (
-    <div>
-      {/* Top Header */}
-      <header>
+    <div style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
+      {/* Scope Radar Sweep & Grid */}
+      <div className="gc-radar-bg" />
+      <div className="gc-radar-sweep" />
+
+      {/* Ground Control Header */}
+      <header style={{ position: 'relative', zIndex: 10 }}>
         <div className="brand-wrapper">
-          <div className="brand-logo">🦈</div>
+          <div className="brand-logo" style={{ background: '#0b1120', border: '1px solid var(--ice)' }}>
+            🦈
+          </div>
           <div className="brand-text">
-            <h1>CodeSharks • Agentic Harness</h1>
-            <p>Autonomous Operations with Human-in-the-Loop Governance</p>
+            <h1 style={{ fontFamily: 'Chakra Petch', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              AYUS OPS • GROUND CONTROL
+            </h1>
+            <p style={{ fontFamily: 'IBM Plex Mono' }}>
+              ENTERPRISE AGENTIC HARNESS • <span style={{ color: 'var(--amber)' }}>AMBER=HUMAN</span> | <span style={{ color: 'var(--ice)' }}>ICE=MACHINE</span>
+            </p>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div className="button-group">
+          <div style={{ display: 'flex', gap: '6px' }}>
             <button
-              className={`btn ${activeTab === 'cockpit' ? 'btn-primary' : 'btn-secondary'}`}
+              className={`gc-tab-btn ${activeTab === 'cockpit' ? 'active' : ''}`}
               onClick={() => setActiveTab('cockpit')}
             >
-              <Activity size={15} /> Operations Cockpit
+              <Activity size={14} /> Mission Control
             </button>
             <button
-              className={`btn ${activeTab === 'database' ? 'btn-primary' : 'btn-secondary'}`}
+              className={`gc-tab-btn ${activeTab === 'database' ? 'active' : ''}`}
               onClick={() => { setActiveTab('database'); refreshAllData(); }}
             >
-              <Layers size={15} /> Live Database
+              <Layers size={14} /> System Record
             </button>
           </div>
 
-          <div className="live-badge">
-            <div className="pulse-dot"></div>
-            <span>LIVE HARNESS</span>
+          <div className="live-badge" style={{ borderRadius: '0', background: 'var(--ice-dim)', border: '1px solid var(--ice)', color: 'var(--ice)' }}>
+            <div className="pulse-dot" style={{ background: 'var(--ice)', boxShadow: '0 0 10px var(--ice)' }} />
+            <span style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.72rem' }}>GROUND CONTROL ON</span>
           </div>
         </div>
       </header>
 
-      <div className="app-container">
-        {/* KPI Metrics */}
+      <div className="app-container" style={{ position: 'relative', zIndex: 5 }}>
+        {/* AYUS Reactor Hero HUD */}
+        <AyusReactor
+          currentState={reactorState}
+          transcript={reactorTranscript}
+          onTriggerSweep={runAllAgents}
+        />
+
+        {/* Top Operational Metrics */}
         <div className="metrics-grid">
-          <div className="glass-panel metric-card">
-            <span className="metric-title">Critical Actions Intercepted</span>
-            <div className="metric-value" style={{ color: '#fb7185' }}>
+          <div className="gc-panel gc-panel-amber metric-card">
+            <span className="metric-title" style={{ color: 'var(--amber)' }}>[CRITICAL INTERCEPTIONS]</span>
+            <div className="metric-value gc-data" style={{ color: 'var(--amber)' }}>
               {approvals.length + metrics.approvedAndExecutedCount + metrics.rejectedSafetyCount}
             </div>
-            <span className="metric-footer">Halted before unauthorized execution</span>
+            <span className="metric-footer gc-data">Halted prior to external mutation</span>
           </div>
 
-          <div className="glass-panel metric-card">
-            <span className="metric-title">Pending Human Approvals</span>
-            <div className="metric-value" style={{ color: '#fbbf24' }}>
+          <div className="gc-panel gc-panel-amber metric-card">
+            <span className="metric-title" style={{ color: 'var(--amber)' }}>[PENDING CLEARANCE]</span>
+            <div className="metric-value gc-data" style={{ color: '#fff' }}>
               {approvals.length}
             </div>
-            <span className="metric-footer">Awaiting executive sign-off</span>
+            <span className="metric-footer gc-data">Awaiting founder decision</span>
           </div>
 
-          <div className="glass-panel metric-card">
-            <span className="metric-title">Autonomous Hours Saved</span>
-            <div className="metric-value" style={{ color: '#34d399' }}>
+          <div className="gc-panel gc-panel-ice metric-card">
+            <span className="metric-title" style={{ color: 'var(--ice)' }}>[HOURS SAVED]</span>
+            <div className="metric-value gc-data" style={{ color: 'var(--ice)' }}>
               {metrics.hoursSavedAutonomousOps} hrs
             </div>
-            <span className="metric-footer">Across Sales, Finance, HR & Tech</span>
+            <span className="metric-footer gc-data">Autonomously handled</span>
           </div>
 
-          <div className="glass-panel metric-card">
-            <span className="metric-title">Safety & Policy Adherence</span>
-            <div className="metric-value" style={{ color: '#38bdf8' }}>
+          <div className="gc-panel gc-panel-ice metric-card">
+            <span className="metric-title" style={{ color: 'var(--ice)' }}>[SAFETY ADHERENCE]</span>
+            <div className="metric-value gc-data" style={{ color: '#34d399' }}>
               {metrics.riskMitigationRate}
             </div>
-            <span className="metric-footer">0 unapproved critical actions</span>
+            <span className="metric-footer gc-data">0 unapproved critical actions</span>
           </div>
         </div>
 
-        {/* Judge Live Pitch Scenarios Bar */}
-        <div className="glass-panel scenario-bar">
+        {/* Preset Judge Demo Rail */}
+        <div className="gc-panel scenario-bar" style={{ borderRadius: 0, border: '1px solid var(--border-surface)' }}>
           <div className="scenario-info">
-            <h3><Sparkles size={18} color="#38bdf8" /> Live Hackathon Demo Scenarios</h3>
-            <p>Click any preset scenario to watch the autonomous agent reason, plan, and pause for approval:</p>
+            <h3 style={{ fontFamily: 'Chakra Petch', textTransform: 'uppercase' }}>
+              <Radar size={18} color="var(--ice)" /> Live Mission Simulator
+            </h3>
+            <p style={{ fontFamily: 'IBM Plex Mono' }}>
+              Inject business operational anomalies to trigger the Agentic Safety Harness:
+            </p>
           </div>
           <div className="button-group">
             <button
-              className="btn btn-secondary"
+              className="gc-tab-btn"
               disabled={loadingAction}
               onClick={() => triggerScenario('ENTERPRISE_CONTRACT')}
             >
-              💼 Enterprise Deal (₹1.5L Contract)
+              💼 Enterprise Deal (₹1.5L)
             </button>
             <button
-              className="btn btn-secondary"
+              className="gc-tab-btn"
               disabled={loadingAction}
               onClick={() => triggerScenario('HIGH_VALUE_INVOICE')}
             >
-              📊 High-Value Overdue (₹1.2L)
+              📊 High-Debt Overdue (₹1.2L)
             </button>
             <button
-              className="btn btn-secondary"
+              className="gc-tab-btn"
               disabled={loadingAction}
               onClick={() => triggerScenario('SEV1_INCIDENT')}
             >
               ⚡ SEV-1 Incident Rollback
             </button>
             <button
-              className="btn btn-secondary"
+              className="gc-tab-btn"
               disabled={loadingAction}
               onClick={() => triggerScenario('TALENT_OFFER')}
             >
-              👥 Offer Letter (₹28L CTC)
+              👥 Executive Offer (₹28L)
             </button>
             <button
-              className="btn btn-primary"
+              className="gc-tab-btn active"
               disabled={loadingAction}
               onClick={runAllAgents}
             >
-              <Zap size={15} /> Run Full Enterprise Sweep
+              <Zap size={14} /> Full Enterprise Sweep
             </button>
           </div>
         </div>
 
         {activeTab === 'cockpit' ? (
           <div className="main-grid">
-            {/* Left Column: Department Agents Roster */}
+            {/* Left: Department Agent Network */}
             <div className="department-roster">
               <div className="section-header">
-                <h2><Building2 size={18} /> Department Autonomous Agents</h2>
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                  {agents.length} Specialized Agents Active
+                <h2 className="gc-header" style={{ color: 'var(--ice)' }}>
+                  <Cpu size={16} /> Autonomous Department Network
+                </h2>
+                <span className="gc-data" style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                  {agents.length} SPECIALIZED SEATS
                 </span>
               </div>
 
               <div className="agent-cards-container">
                 {agents.map((ag) => (
-                  <div key={ag.id} className="glass-panel agent-card" style={{ borderLeftColor: ag.badgeColor }}>
+                  <div
+                    key={ag.id}
+                    className="gc-panel agent-card"
+                    style={{
+                      borderRadius: 0,
+                      borderLeft: `3px solid ${ag.badgeColor || 'var(--ice)'}`,
+                      background: 'var(--bg-surface)'
+                    }}
+                  >
                     <div className="agent-meta">
-                      <div className="agent-avatar">{ag.avatar}</div>
+                      <div className="agent-avatar" style={{ borderRadius: 0, border: '1px solid var(--border-surface)' }}>
+                        {ag.avatar}
+                      </div>
                       <div className="agent-details">
-                        <h4>
+                        <h4 style={{ fontFamily: 'Chakra Petch' }}>
                           {ag.name}
-                          <span style={{ fontSize: '0.7rem', color: ag.badgeColor, fontWeight: 700 }}>
-                            • {ag.department}
+                          <span className="gc-data" style={{ fontSize: '0.68rem', color: ag.badgeColor, fontWeight: 700 }}>
+                            // {ag.department}
                           </span>
                         </h4>
-                        <div className="title">{ag.title}</div>
+                        <div className="title gc-data">{ag.title}</div>
                         <div className="desc">{ag.description}</div>
                       </div>
                     </div>
 
                     <button
-                      className="btn btn-secondary"
-                      style={{ padding: '0.4rem 0.75rem', fontSize: '0.78rem' }}
+                      className="gc-tab-btn"
+                      style={{ padding: '4px 10px', fontSize: '0.72rem' }}
                       disabled={loadingAction}
                       onClick={() => runAgent(ag.department)}
                     >
-                      <Play size={12} /> Run
+                      <Play size={10} /> RUN
                     </button>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Right Column: Approval Queue & Live Terminal Feed */}
+            {/* Right: Clearance Queue & Telemetry Feed */}
             <div className="right-column">
-              {/* Approval Queue */}
-              <div className="glass-panel approval-queue-box">
+              {/* Founder Clearance Queue */}
+              <div className="gc-panel gc-panel-amber approval-queue-box" style={{ borderRadius: 0 }}>
                 <div className="section-header" style={{ marginBottom: 0 }}>
-                  <h2 style={{ color: '#fbbf24' }}>
-                    <Lock size={18} /> Human-in-the-Loop Approval Queue
+                  <h2 className="gc-header" style={{ color: 'var(--amber)' }}>
+                    <Lock size={16} /> Founder Clearance Queue [AMBER]
                   </h2>
-                  <span className="risk-badge risk-HIGH">
-                    {approvals.length} PENDING
+                  <span className="gc-data" style={{ color: 'var(--amber)', fontSize: '0.78rem', fontWeight: 700 }}>
+                    {approvals.length} PENDING SIGN-OFF
                   </span>
                 </div>
 
                 {approvals.length === 0 ? (
-                  <div className="empty-queue">
+                  <div className="empty-queue gc-data" style={{ padding: '2rem 1rem' }}>
                     <div className="empty-icon">🛡️</div>
-                    <div>All systems operating within autonomous risk boundaries.</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.3rem' }}>
-                      Click any scenario above to trigger a critical business action.
+                    <div style={{ color: '#94a3b8' }}>ALL AGENTS OPERATING WITHIN AUTONOMOUS LIMITS</div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.3rem' }}>
+                      Click any scenario above to trigger a critical action requiring clearance.
                     </div>
                   </div>
                 ) : (
                   approvals.map((req) => (
-                    <div key={req.id} className="approval-item">
+                    <div key={req.id} className="gc-clearance-card">
                       <div className="approval-top">
-                        <span className="approval-summary">{req.proposalSummary}</span>
-                        <span className={`risk-badge risk-${req.riskLevel}`}>{req.riskLevel} RISK</span>
-                      </div>
-
-                      <div className="approval-reason">
-                        ⚠️ <strong>Policy Reason:</strong> {req.reason}
-                      </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                          Target Tool: <code>{req.toolName}</code>
+                        <span style={{ fontFamily: 'Chakra Petch', fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>
+                          {req.proposalSummary}
                         </span>
-                        <div className="approval-actions">
+                        <span className="gc-data" style={{ color: 'var(--amber)', fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', background: 'var(--amber-dim)', border: '1px solid var(--amber)' }}>
+                          {req.riskLevel} CLEARANCE
+                        </span>
+                      </div>
+
+                      <div className="approval-reason gc-data" style={{ background: '#000', borderLeft: '3px solid var(--amber)' }}>
+                        ⚠️ <strong>POLICY RESTRICTION:</strong> {req.reason}
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                        <span className="gc-data" style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                          TARGET TOOL: <code style={{ color: 'var(--ice)' }}>{req.toolName}</code>
+                        </span>
+                        <div style={{ display: 'flex', gap: '8px' }}>
                           <button
-                            className="btn btn-danger"
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.78rem' }}
+                            className="gc-clearance-btn-reject"
                             disabled={loadingAction}
                             onClick={() => handleReject(req.id)}
                           >
-                            <XCircle size={14} /> Reject
+                            <XCircle size={13} style={{ display: 'inline', marginRight: '4px' }} /> REJECT
                           </button>
                           <button
-                            className="btn btn-success"
-                            style={{ padding: '0.4rem 0.85rem', fontSize: '0.78rem' }}
+                            className="gc-clearance-btn-approve"
                             disabled={loadingAction}
                             onClick={() => handleApprove(req.id)}
                           >
-                            <CheckCircle2 size={14} /> Approve & Execute
+                            <CheckCircle2 size={13} style={{ display: 'inline', marginRight: '4px' }} /> APPROVE &amp; EXECUTE
                           </button>
                         </div>
                       </div>
@@ -422,25 +478,25 @@ export default function App() {
                 )}
               </div>
 
-              {/* Live Terminal */}
-              <div className="glass-panel live-terminal">
+              {/* Machine Telemetry Feed */}
+              <div className="gc-panel gc-panel-ice live-terminal" style={{ borderRadius: 0 }}>
                 <div className="terminal-header">
-                  <div className="terminal-title">
-                    <Terminal size={15} /> Real-Time Agent Reasoning & Harness Stream
+                  <div className="terminal-title" style={{ fontFamily: 'IBM Plex Mono', color: 'var(--ice)' }}>
+                    <Terminal size={14} /> MACHINE REASONING &amp; HARNESS STREAM [ICE]
                   </div>
                   <button
-                    className="btn btn-secondary"
-                    style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}
+                    className="gc-tab-btn"
+                    style={{ padding: '2px 8px', fontSize: '0.68rem' }}
                     onClick={() => setLogs([])}
                   >
-                    Clear Feed
+                    CLEAR
                   </button>
                 </div>
 
-                <div className="terminal-body">
+                <div className="terminal-body gc-data">
                   {logs.length === 0 ? (
                     <div style={{ color: '#64748b', textAlign: 'center', padding: '3rem 0' }}>
-                      Awaiting agent operations... Click "Run Full Enterprise Sweep" to start.
+                      &gt; Awaiting agent operations... Click "Full Enterprise Sweep" to observe.
                     </div>
                   ) : (
                     logs.map((log, idx) => (
@@ -457,38 +513,42 @@ export default function App() {
             </div>
           </div>
         ) : (
-          /* Live Database View */
-          <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <h2 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Layers size={20} color="#38bdf8" /> Operational Enterprise Database (Live State)
+          /* System Record DB */
+          <div className="gc-panel" style={{ padding: '1.5rem', borderRadius: 0 }}>
+            <h2 className="gc-header" style={{ marginBottom: '1.25rem', color: 'var(--ice)' }}>
+              <Layers size={18} /> OPERATIONAL ENTERPRISE LEDGER (LIVE STATE)
             </h2>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
               <div>
-                <h4 style={{ color: '#38bdf8', marginBottom: '0.6rem' }}>CRM Inbound Leads</h4>
+                <h4 className="gc-header" style={{ color: 'var(--ice)', marginBottom: '0.6rem' }}>
+                  // CRM INBOUND LEADS
+                </h4>
                 {dbData?.leads?.map((lead) => (
-                  <div key={lead.id} style={{ background: 'rgba(0,0,0,0.3)', padding: '0.8rem', borderRadius: '8px', marginBottom: '0.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div key={lead.id} className="gc-panel gc-data" style={{ padding: '0.8rem', marginBottom: '0.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
-                      <span>{lead.company} ({lead.contact})</span>
+                      <span style={{ color: '#fff' }}>{lead.company} ({lead.contact})</span>
                       <span style={{ color: '#10b981' }}>₹{lead.budget?.toLocaleString('en-IN')}</span>
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.2rem' }}>
-                      Status: <strong>{lead.status}</strong> • {lead.notes}
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
+                      STATUS: <strong style={{ color: 'var(--ice)' }}>{lead.status}</strong> • {lead.notes}
                     </div>
                   </div>
                 ))}
               </div>
 
               <div>
-                <h4 style={{ color: '#10b981', marginBottom: '0.6rem' }}>Accounts Receivable (Invoices)</h4>
+                <h4 className="gc-header" style={{ color: '#10b981', marginBottom: '0.6rem' }}>
+                  // ACCOUNTS RECEIVABLE (INVOICES)
+                </h4>
                 {dbData?.invoices?.map((inv) => (
-                  <div key={inv.id} style={{ background: 'rgba(0,0,0,0.3)', padding: '0.8rem', borderRadius: '8px', marginBottom: '0.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div key={inv.id} className="gc-panel gc-data" style={{ padding: '0.8rem', marginBottom: '0.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
-                      <span>{inv.client} ({inv.id})</span>
-                      <span style={{ color: inv.amount > 50000 ? '#fb7185' : '#38bdf8' }}>₹{inv.amount?.toLocaleString('en-IN')}</span>
+                      <span style={{ color: '#fff' }}>{inv.client} ({inv.id})</span>
+                      <span style={{ color: inv.amount > 50000 ? 'var(--amber)' : 'var(--ice)' }}>₹{inv.amount?.toLocaleString('en-IN')}</span>
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.2rem' }}>
-                      Status: <strong>{inv.status}</strong> • Due: {inv.dueDate} ({inv.daysOverdue} days overdue)
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
+                      STATUS: <strong style={{ color: 'var(--amber)' }}>{inv.status}</strong> • DUE: {inv.dueDate} ({inv.daysOverdue}d overdue)
                     </div>
                   </div>
                 ))}
