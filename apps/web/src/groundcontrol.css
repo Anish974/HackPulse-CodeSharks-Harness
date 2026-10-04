@@ -1,184 +1,425 @@
 /* ================================================================
-   AYUS OPS — GROUND CONTROL DESIGN SYSTEM
+   AYUS OPS — GROUND CONTROL
    ================================================================
-   THE COLOUR LAW:
+   The redesign layer. Imported after index.css and after every
+   component stylesheet, so it re-cuts the geometry and chrome of the
+   whole app without rewriting 2,400 lines of working layout.
+
+   Read this file to know what the app actually looks like.
+
+   THE COLOUR LAW, obeyed everywhere:
      AMBER = the human. Anything that needs the founder, or is the
              founder acting: selection, focus, pending clearance.
      ICE   = the machine. Anything running on its own.
-   
+   Nothing is both. If a control turns amber, it is asking for a
+   person — that is the entire legend, and it never needs a key.
+
    THE TYPE LAW:
      Chakra Petch = interface (nav, buttons, labels, headings)
      IBM Plex Mono = data (values, IDs, SOP text, code, timestamps)
    ================================================================ */
 
-:root {
-  --amber: #f59e0b;
-  --amber-dim: rgba(245, 158, 11, 0.15);
-  --amber-glow: rgba(245, 158, 11, 0.35);
-
-  --ice: #38bdf8;
-  --ice-dim: rgba(56, 189, 248, 0.12);
-  --ice-glow: rgba(56, 189, 248, 0.3);
-
-  --bg-dark: #070a12;
-  --bg-surface: #0b1120;
-  --bg-surface-elevated: #0f172a;
-  --border-surface: rgba(255, 255, 255, 0.08);
-
-  --font-interface: 'Chakra Petch', sans-serif;
-  --font-data: 'IBM Plex Mono', monospace;
+/* ---------------- 1. GEOMETRY ----------------
+   Instruments are cut square. The only round things left are lamps and
+   avatars, because those are physically round objects. */
+.app-shell *:not(canvas),
+.center-screen *:not(canvas) {
+  border-radius: 0;
+}
+.app-shell [class*="dot"],
+.app-shell [class*="lamp"],
+.app-shell [class*="avatar"],
+.app-shell [class*="spinner"],
+.app-shell [class*="pulse"],
+.app-shell [class*="orb"],
+.app-shell [class*="reactor"],
+.app-shell .voice-viz i,
+.center-screen [class*="dot"],
+.center-screen [class*="spinner"] {
+  border-radius: 50%;
 }
 
-body {
-  font-family: var(--font-interface);
-  background-color: var(--bg-dark);
-  color: #f1f5f9;
+/* Shadows are for objects sitting on a surface. Nothing here sits on a
+   surface — it is etched into one. */
+.app-shell [class*="card"],
+.app-shell [class*="panel"],
+.app-shell [class*="tile"],
+.app-shell .glass {
+  box-shadow: none;
+}
+
+/* ---------------- 2. ATMOSPHERE ----------------
+   Five drifting blur orbs were mood lighting. Replaced with one slow
+   scope sweep across the fixed page grid: a single conic gradient
+   turning once every 14 seconds. One ambient effect, drawn from the
+   subject, and trivially switched off. */
+.ambient span { display: none; }
+
+.ambient-grid {
+  inset: -60%;
+  background-image: none;
+  background: conic-gradient(
+    from 0deg,
+    rgba(95, 179, 217, 0.06) 0deg,
+    rgba(95, 179, 217, 0.014) 26deg,
+    transparent 62deg,
+    transparent 360deg
+  );
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0%, transparent 62%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 0%, transparent 62%);
+  opacity: 1;
+  animation: scope-sweep 14s linear infinite;
+}
+@keyframes scope-sweep { to { transform: rotate(360deg); } }
+
+/* Range rings were drawn here too, so the sweep had something to cross.
+   Cut: the page already sits on a fixed 32px scope grid, and three ambient
+   layers behind the content was two more than the idea needed. */
+
+/* ---------------- 3. CHROME: the left rail ---------------- */
+.sidebar {
+  background: linear-gradient(180deg, rgba(6, 8, 9, 0.96), rgba(9, 12, 15, 0.96));
+  border-right: 1px solid var(--line-soft);
+  backdrop-filter: blur(12px);
+}
+
+.sidebar-logo {
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--line-soft);
+}
+.sidebar-logo .wordmark h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.22em;
+  color: var(--ink-bright);
+}
+.sidebar-logo .wordmark span,
+.sidebar-subtitle {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Tier labels. The three tiers are not decoration — they are what the
+   operator is actually looking at: the surface they drive, the workforce
+   that runs on it, and the record it all leaves behind. */
+.nav-tier + .nav-tier { margin-top: var(--s-5); }
+.nav-tier-label {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 0 var(--s-5) var(--s-2);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.nav-tier-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line-soft);
+}
+
+.nav-item {
+  position: relative;
+  font-family: var(--display);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  padding: 7px var(--s-5);
+  border: 0;
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: var(--muted-bright);
+  transition: var(--transition);
+}
+.nav-item:hover {
+  background: rgba(223, 228, 232, 0.03);
+  color: var(--ink);
+}
+/* Selection is the founder pointing at something, so selection is amber. */
+.nav-item.active {
+  background: var(--amber-dim);
+  border-left-color: var(--amber);
+  color: var(--ink-bright);
+}
+.nav-item .nav-icon { font-family: var(--mono); opacity: 0.6; width: 16px; }
+.nav-item.active .nav-icon { opacity: 1; color: var(--amber); }
+
+.sidebar-footer { border-top: 1px solid var(--line-soft); }
+.sidebar-signout {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--muted);
+}
+.sidebar-signout:hover {
+  color: var(--alert);
+  border-color: rgba(229, 72, 77, 0.4);
+  background: transparent;
+}
+
+/* ---------------- 4. CHROME: the top bar ---------------- */
+.topbar {
+  height: var(--topbar-h);
+  padding: 0 var(--s-6);
+  gap: var(--s-4);
+  background: rgba(6, 8, 9, 0.82);
+  border-bottom: 1px solid var(--line-soft);
+  backdrop-filter: blur(12px);
+}
+.topbar-status,
+.topbar-clock {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-bright);
+}
+.topbar-clock { color: var(--ink); font-variant-numeric: tabular-nums; }
+.topbar-status .top-dot {
+  background: var(--ice);
+  box-shadow: 0 0 8px rgba(95, 179, 217, 0.7);
+}
+.topbar-status.is-running .top-dot {
+  background: var(--signal);
+  box-shadow: 0 0 8px rgba(61, 220, 145, 0.8);
+}
+
+/* Pending decisions are the one thing on this bar that wants a person. */
+.topbar-pending-btn {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid rgba(232, 168, 56, 0.4);
+  background: var(--amber-dim);
+  color: var(--amber);
+}
+.topbar-pending-btn:hover { background: rgba(232, 168, 56, 0.2); }
+
+.nav-toggle-btn {
+  border: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--muted-bright);
+}
+.nav-toggle-btn:hover {
+  background: var(--ice-dim);
+  border-color: rgba(95, 179, 217, 0.3);
+  color: var(--ink-bright);
+}
+
+.run-btn {
+  font-family: var(--display);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid rgba(95, 179, 217, 0.35);
+  background: var(--ice-dim);
+  color: var(--ice);
+}
+.run-btn:hover { background: rgba(95, 179, 217, 0.2); border-color: var(--ice); }
+.run-btn:disabled { opacity: 0.5; }
+
+/* ---------------- 5. SIGNATURE: the clearance strip ----------------
+   One tick per agent, always on, directly above the content. A short
+   ice tick is an agent idle and fine; a tall ice tick is one working;
+   an amber tick is one stopped, holding for the founder. The whole
+   state of the org in a 26px band — and it needs no legend, because it
+   obeys the same colour law as everything else on screen. */
+.clearance-strip {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  height: var(--strip-h);
+  margin: calc(var(--s-6) * -1) calc(var(--s-7) * -1) var(--s-5);
+  padding: 0 var(--s-7);
+  background: rgba(6, 8, 9, 0.9);
+  border-bottom: 1px solid var(--line-soft);
+  backdrop-filter: blur(10px);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.clearance-strip::-webkit-scrollbar { display: none; }
+.clearance-label { flex: none; }
+
+.clearance-ticks {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 14px;
+  flex: none;
+}
+.clearance-tick {
+  width: 3px;
+  height: 6px;
+  background: var(--ice);
+  opacity: 0.45;
+  transition: var(--transition);
+}
+.clearance-tick.busy { height: 14px; opacity: 1; }
+.clearance-tick.holding {
+  height: 14px;
+  background: var(--amber);
+  opacity: 1;
+  animation: tick-hold 1.6s ease-in-out infinite;
+}
+@keyframes tick-hold { 50% { opacity: 0.3; } }
+
+.clearance-readout { display: flex; gap: var(--s-4); margin-left: auto; flex: none; }
+.clearance-readout b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+.clearance-readout .holding-count { color: var(--amber); }
+
+/* ---------------- 6. CONTROLS ----------------
+   Every button is one of two things: a machine action, or a decision
+   only the founder can make. */
+.app-shell button,
+.center-screen button {
+  font-family: var(--display);
+  letter-spacing: 0.06em;
+}
+.app-shell input,
+.app-shell textarea,
+.app-shell select,
+.center-screen input {
+  font-family: var(--mono);
   letter-spacing: 0.02em;
 }
-
-/* Square Geometry & Etched Instruments */
-.gc-panel {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-surface);
-  position: relative;
+.app-shell input:focus,
+.app-shell textarea:focus {
+  border-color: rgba(232, 168, 56, 0.45);   /* a person is typing */
+  outline: none;
 }
 
-.gc-panel-amber {
-  border-color: rgba(245, 158, 11, 0.35);
-  box-shadow: 0 0 25px rgba(245, 158, 11, 0.12);
-}
-
-.gc-panel-ice {
-  border-color: rgba(56, 189, 248, 0.3);
-  box-shadow: 0 0 25px rgba(56, 189, 248, 0.1);
-}
-
-.gc-header {
-  font-family: var(--font-interface);
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+.app-shell [class*="badge"],
+.app-shell [class*="pill"],
+.app-shell [class*="chip"],
+.app-shell [class*="tag"] {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
-.gc-data {
-  font-family: var(--font-data);
+/* ---------------- 7. TYPE RHYTHM ----------------
+   Headings across every tab get one instrument treatment, so a new tab
+   cannot invent its own voice by accident.
+
+   Written with :where() on purpose — zero specificity, so this is a floor
+   a screen can deliberately step over (a page hero, a graph title), not a
+   ceiling that silently flattens every heading in the app. */
+:where(.app-shell) :where(h1) { font-size: 20px; letter-spacing: 0.14em; text-transform: uppercase; }
+:where(.app-shell) :where(h2) { font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; }
+:where(.app-shell) :where(h3) { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-bright); }
+
+/* Numbers are data: always mono, always tabular, so columns align. */
+.app-shell [class*="stat-val"],
+.app-shell [class*="count"],
+.app-shell [class*="metric"],
+.app-shell [class*="clock"] {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Ambient Scope / Radar Sweep */
-.gc-radar-bg {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image:
-    linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
+/* ---------------- 8. MOTION ---------------- */
+@media (prefers-reduced-motion: reduce) {
+  .ambient-grid,
+  .clearance-tick.holding { animation: none !important; }
+  .app-shell *, .center-screen * { transition-duration: 0.01ms !important; }
 }
 
-.gc-radar-sweep {
-  position: fixed;
-  inset: -50%;
-  pointer-events: none;
-  z-index: 0;
-  background: conic-gradient(from 0deg at 50% 50%, rgba(56, 189, 248, 0.06) 0deg, transparent 60deg, transparent 360deg);
-  animation: gcRadarTurn 16s linear infinite;
-}
-
-@keyframes gcRadarTurn {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Ground Control Rail & Tabs */
-.gc-tab-btn {
-  font-family: var(--font-interface);
-  font-size: 0.82rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 8px 18px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-surface);
-  color: #94a3b8;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.gc-tab-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-}
-
-.gc-tab-btn.active {
-  background: var(--ice-dim);
-  border-color: var(--ice);
-  color: var(--ice);
-  box-shadow: 0 0 15px var(--ice-glow);
-}
-
-.gc-tab-btn.amber-active {
-  background: var(--amber-dim);
-  border-color: var(--amber);
-  color: var(--amber);
-  box-shadow: 0 0 15px var(--amber-glow);
-}
-
-/* Clearance & Approval Queue Item */
-.gc-clearance-card {
-  background: rgba(15, 23, 42, 0.9);
-  border-left: 3px solid var(--amber);
-  border-top: 1px solid rgba(245, 158, 11, 0.2);
-  border-right: 1px solid rgba(245, 158, 11, 0.2);
-  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
-  padding: 14px 18px;
+/* ---------------- 9. FULL-BLEED TABS ----------------
+   Org Graph, Knowledge Vault, Docs and AYUS run edge to edge and zero out
+   the content padding, which would otherwise stretch the clearance strip to
+   full height along with the page. Make those tabs a column instead: strip
+   first at its own height, page takes whatever is left. */
+.main-content.main-content-full,
+.main-content.main-content-ayus {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
+}
+.main-content.main-content-full > .clearance-strip,
+.main-content.main-content-ayus > .clearance-strip {
+  flex: none;
+  height: var(--strip-h) !important;
+  margin: 0 !important;
+  padding: 0 var(--s-5) !important;
+}
+.main-content.main-content-full > *:not(.clearance-strip),
+.main-content.main-content-ayus > *:not(.clearance-strip) {
+  flex: 1;
+  min-height: 0;
+  height: auto !important;
 }
 
-.gc-clearance-btn-approve {
-  font-family: var(--font-interface);
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  background: #10b981;
-  color: #000;
-  border: none;
-  padding: 6px 14px;
-  cursor: pointer;
-  transition: all 0.15s ease;
+/* ---------------- 10. NARROW ----------------
+   The strip bleeds to the content edges, so its negative margins have to
+   track whatever padding .main-content is currently using. */
+@media (max-width: 900px) {
+  .clearance-strip {
+    margin: -20px -16px var(--s-4);
+    padding: 0 16px;
+    gap: var(--s-3);
+  }
+  .clearance-readout span:last-child { display: none; }  /* drop the timestamp first */
+}
+@media (max-width: 580px) {
+  .clearance-label { display: none; }
 }
 
-.gc-clearance-btn-approve:hover {
-  background: #34d399;
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.5);
+/* ---------------- 11. ENFORCING THE LAW ----------------
+   Three places in the old UI shouted in red for things that are not
+   failures — they are the app asking the founder for a decision. Red is
+   reserved for something that went wrong; a queue that is waiting on you
+   went right. Both move to amber, which is what amber means here. */
+.nav-item .nav-badge-red,
+.right-agent-status .pending-badge-red,
+.pending-badge-red {
+  background: transparent;
+  color: var(--amber);
+  border: 1px solid rgba(232, 168, 56, 0.45);
+  box-shadow: none;
+  font-weight: 500;
+  animation: none;
 }
 
-.gc-clearance-btn-reject {
-  font-family: var(--font-interface);
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  background: rgba(244, 63, 94, 0.15);
-  color: #fb7185;
-  border: 1px solid rgba(244, 63, 94, 0.4);
-  padding: 6px 14px;
-  cursor: pointer;
-  transition: all 0.15s ease;
+/* Section 1 flattened every card shadow, which also took the urgency glow
+   off pending actions. Urgency comes back as a 2px amber edge — same
+   signal, in the language the rest of the app now speaks. */
+.card-urgent {
+  border-color: var(--line-soft);
+  border-left: 2px solid var(--amber);
+  box-shadow: none;
+}
+.urgent-pill {
+  background: transparent;
+  color: var(--amber);
+  border: 1px solid rgba(232, 168, 56, 0.45);
 }
 
-.gc-clearance-btn-reject:hover {
-  background: rgba(244, 63, 94, 0.25);
-  border-color: #f43f5e;
-}
+/* The red pulse next to the pending count in the top bar is the same
+   category error — it is a person being paged, not a fault. */
+.red-dot-pulse { background: var(--amber); box-shadow: 0 0 8px rgba(232, 168, 56, 0.7); }
+
+/* Genuine faults keep red, and are the only thing on screen that does. */
+.status-dot.error,
+.right-agent-status .status-dot.error { background: var(--alert); }
