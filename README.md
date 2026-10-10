@@ -1,22 +1,22 @@
 <div align="center">
 
-# 🦈 CodeSharks • Enterprise Agentic Harness
-### *Autonomous Multi-Agent Operations with Human-in-the-Loop Governance*
+# 🛡️ Aegis • Enterprise Agentic Governance OS
+### *Autonomous Multi-Agent Operations with Human-in-the-Loop Policy Gatekeeper*
 
-[![HackPulse 1.0](https://img.shields.io/badge/HackPulse%201.0-Problem%20Statement%2004-FF3366?style=for-the-badge&logo=target)](https://github.com/Anish974/HackPulse-CodeSharks-Harness)
-[![Architecture](https://img.shields.io/badge/Architecture-Monorepo%20Workspaces-06B6D4?style=for-the-badge&logo=turborepo)](https://github.com/Anish974/HackPulse-CodeSharks-Harness)
-[![HITL Safety](https://img.shields.io/badge/Safety-Human--in--the--Loop-10B981?style=for-the-badge&logo=shield)](https://github.com/Anish974/HackPulse-CodeSharks-Harness)
+[![Production Ready](https://img.shields.io/badge/Production-Enterprise%20Grade-06B6D4?style=for-the-badge&logo=shield)](https://github.com/Anish974)
+[![Architecture](https://img.shields.io/badge/Architecture-Monorepo%20Workspaces-06B6D4?style=for-the-badge&logo=turborepo)](https://github.com/Anish974/HackPulse-Aegis-Harness)
+[![HITL Safety](https://img.shields.io/badge/Safety-Human--in--the--Loop-10B981?style=for-the-badge&logo=shield)](https://github.com/Anish974/HackPulse-Aegis-Harness)
 [![License](https://img.shields.io/badge/License-MIT-8B5CF6?style=for-the-badge)](LICENSE)
 
 <br/>
 
-> **"Unconstrained autonomous agents are an enterprise liability. CodeSharks creates a deterministic governance perimeter where specialized agents autonomously plan and execute routine workflows, while high-risk critical actions are halted and queued for executive sign-off."**
+> **"Unconstrained autonomous agents are an enterprise liability. Aegis creates a deterministic governance perimeter where specialized agents autonomously plan and execute routine workflows, while high-risk critical actions are halted and queued for executive sign-off."**
 
 [Live Architecture](#-system-architecture) • [Department Agents](#-departmental-agent-roster) • [Quickstart](#-quickstart-guide) • [3-Minute Judge Pitch](#-3-minute-judge-demo-script) • [Documentation](docs/)
 
 
 <div align="center">
-  <img src="docs/assets/demo.gif" alt="CodeSharks Enterprise Harness Interactive Walkthrough" width="100%" style="border-radius: 12px; box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1);" />
+  <img src="docs/assets/demo.gif" alt="Aegis Enterprise Harness Interactive Walkthrough" width="100%" style="border-radius: 12px; box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1);" />
 </div>
 
 ---
@@ -135,16 +135,16 @@ Is discount rate > 15%? ────────────────► YES 
 ## 📁 Monorepo Workspace Structure
 
 ```text
-HackPulse-CodeSharks-Harness/
+HackPulse-Aegis-Harness/
 ├── .agents/
 │   ├── skills/
 │   │   ├── agentic-harness-ops/     # Extension & operational playbook
-│   │   └── hackathon-pitch-guide/   # 3-minute pitch & judge defense script
+│   │   └── executive-demo-guide/   # 3-minute pitch & judge defense script
 │   └── rules/
 │       └── agentic-standards.md     # Governance safety standards
 ├── docs/
 │   ├── ARCHITECTURE.md              # Deep system design & sequence diagrams
-│   ├── PROBLEM_STATEMENT_ALIGNMENT.md # 1-to-1 HackPulse Problem 04 mapping
+│   ├── PROBLEM_STATEMENT_ALIGNMENT.md # Enterprise compliance and policy mapping
 │   ├── AGENTS_AND_DEPARTMENTS.md    # Detailed specifications for all 6 agents
 │   ├── GOVERNANCE_AND_SAFETY_POLICY.md # Risk matrix & audit compliance
 │   └── API_AND_WEBSOCKET_SPEC.md    # REST endpoints & WebSocket payloads
@@ -172,8 +172,8 @@ HackPulse-CodeSharks-Harness/
 ### 1. Installation
 Clone the repository and install all monorepo dependencies in a single step:
 ```bash
-git clone https://github.com/Anish974/HackPulse-CodeSharks-Harness.git
-cd HackPulse-CodeSharks-Harness
+git clone https://github.com/Anish974/HackPulse-Aegis-Harness.git
+cd HackPulse-Aegis-Harness
 npm install
 ```
 
@@ -198,17 +198,17 @@ npm run dev
 
 | Timing | Action on Screen | What to Say to the Judges |
 | :--- | :--- | :--- |
-| **0:00 - 0:45** | Show Dashboard KPI cards | *"Autonomous agents without safety guardrails hallucinate discounts and create real-world legal liabilities. We built the CodeSharks Agentic Harness to solve this."* |
+| **0:00 - 0:45** | Show Dashboard KPI cards | *"Autonomous agents without safety guardrails hallucinate discounts and create real-world legal liabilities. We built the Aegis Agentic Harness to solve this."* |
 | **0:45 - 1:15** | Click **"💼 Enterprise Deal (₹1.5L Contract)"** | *"Watch Sales Agent Arjun qualify the lead autonomously. But when proposing a ₹1.5L contract (> ₹50k limit), the Harness Gatekeeper intercepts and freezes the action."* |
 | **1:15 - 1:45** | Click **"Approve & Execute"** | *"The CEO reviews the policy justification and signs off with one click. The action executes immediately and logs to an immutable audit trail."* |
 | **1:45 - 2:30** | Click **"⚡ Run Full Enterprise Sweep"** | *"All 5 department agents execute in parallel, proving scalable multi-agent coordination within an enterprise monorepo."* |
-| **2:30 - 3:00** | Open `packages/` directory | *"Built as a strict modular monorepo satisfying every requirement of HackPulse Problem Statement 04."* |
+| **2:30 - 3:00** | Open `packages/` directory | *"Built as a strict modular monorepo designed for zero-trust enterprise multi-agent operations."* |
 
 ---
 
 ## 🏆 HackPulse 1.0 Alignment
 
-| Problem Statement 04 Requirement | Implementation in CodeSharks Harness |
+| Problem Statement 04 Requirement | Implementation in Aegis Harness |
 | :--- | :--- |
 | **Understand Business Tasks** | 5 specialized agents handling Leads, Invoices, Incidents, Candidates & Campaigns |
 | **Tool Execution** | 11 reusable tools in `@codesharks/tools` with structured parameter contracts |
@@ -220,6 +220,6 @@ npm run dev
 
 <div align="center">
 
-Made with 🦈 by **CodeSharks** for **HackPulse 1.0**
+Built with 🛡️ by **Anish** • Open Source under **MIT License**
 
 </div>

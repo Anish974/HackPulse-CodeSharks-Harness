@@ -1,8 +1,8 @@
 {
-  "name": "codesharks-agentic-harness",
+  "name": "aegis-harness",
   "version": "1.0.0",
   "type": "module",
-  "description": "Enterprise Autonomous Multi-Agent Operations System with Human-in-the-Loop Approval Harness",
+  "description": "Aegis: Enterprise Multi-Agent Governance OS with Human-in-the-Loop Policy Gatekeeper",
   "private": true,
   "workspaces": [
     "packages/*",
@@ -20,10 +20,11 @@
     "agentic-ai",
     "human-in-the-loop",
     "multi-agent",
-    "hackpulse",
-    "monorepo"
+    "monorepo",
+    "governance",
+    "security"
   ],
-  "author": "CodeSharks",
+  "author": "Anish",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^9.1.2"

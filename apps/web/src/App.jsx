@@ -676,7 +676,7 @@ export default function App() {
                     THE ORG • 6 SPECIALIZED SEATS
                   </h2>
                   <div style={{ fontFamily: 'var(--mono)', fontSize: '10.5px', color: 'var(--muted-bright)', marginTop: '2px' }}>
-                    Modular autonomous agents conforming to HackPulse Problem 04 monorepo architecture.
+                    Modular autonomous agents conforming to enterprise governance and deterministic safety standards.
                   </div>
                 </div>
                 <button className="run-btn" disabled={busy} onClick={runAllAgents} style={{ padding: '6px 14px' }}>
