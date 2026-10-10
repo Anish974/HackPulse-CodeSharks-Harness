@@ -14,6 +14,11 @@
 
 [Live Architecture](#-system-architecture) • [Department Agents](#-departmental-agent-roster) • [Quickstart](#-quickstart-guide) • [3-Minute Judge Pitch](#-3-minute-judge-demo-script) • [Documentation](docs/)
 
+
+<div align="center">
+  <img src="docs/assets/demo.gif" alt="CodeSharks Enterprise Harness Interactive Walkthrough" width="100%" style="border-radius: 12px; box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1);" />
+</div>
+
 ---
 
 </div>
